@@ -13,14 +13,27 @@ datasource db {
   provider = "postgresql"
 }
 
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@map("payment_status")
+}
+
 model Payment {
-  id          Int      @id @default(autoincrement())
-  total       Decimal  @db.Money
-  currency    String
-  description String
-  email       String
-  card        String?
-  storeId     Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int           @id @default(autoincrement())
+  idempotencyKey String        @unique @default(dbgenerated("gen_random_uuid()")) @map("idempotency_key") @db.Uuid
+  amountInCents  BigInt        @map("amount_in_cents")
+  currency       String
+  description    String
+  email          String
+  last4          String?       @db.VarChar(4)
+  storeId        Int           @map("store_id")
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@map("payments")
 }
