@@ -14,10 +14,10 @@ export class PaymentsService {
   async createPayment(
     createPaymentDto: CreatePaymentDto,
     idempotencyKey: string,
-  ): Promise<Payment | null> {
+  ): Promise<{ data: Payment; status: number } | null> {
     try {
       const { amount, card, ...data } = createPaymentDto;
-      return await this.prisma.payment.create({
+      const newPayment = await this.prisma.payment.create({
         data: {
           ...data,
           amountInCents: amount,
@@ -25,11 +25,17 @@ export class PaymentsService {
           idempotencyKey,
         },
       });
+
+      return { data: newPayment, status: 201 };
     } catch (error) {
       if (this.isUniqueViolation(error)) {
-        return await this.prisma.payment.findUnique({
+        const existingPayment = await this.prisma.payment.findUnique({
           where: { idempotencyKey },
         });
+
+        if (existingPayment) {
+          return { data: existingPayment, status: 200 };
+        }
       }
 
       throw error;
