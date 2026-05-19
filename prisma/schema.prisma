@@ -23,7 +23,7 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id             Int           @id @default(autoincrement())
+  id             String        @id @default(uuid(7)) @db.Uuid
   idempotencyKey String        @unique @default(dbgenerated("gen_random_uuid()")) @map("idempotency_key") @db.Uuid
   amountInCents  BigInt        @map("amount_in_cents")
   currency       String
