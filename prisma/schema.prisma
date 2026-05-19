@@ -22,6 +22,12 @@ enum PaymentStatus {
   @@map("payment_status")
 }
 
+enum OutboxStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
 model Payment {
   id             String        @id @default(uuid(7)) @db.Uuid
   idempotencyKey String        @unique @default(dbgenerated("gen_random_uuid()")) @map("idempotency_key") @db.Uuid
@@ -36,4 +42,16 @@ model Payment {
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   @@map("payments")
+}
+
+model Outbox {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  type      String // Event name (e.g., 'payment_created')
+  payload   String // Event data serialized in JSON string
+  status    OutboxStatus @default(PENDING)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@index([status]) // For cron to quickly find PENDING
+  @@map("outbox")
 }
