@@ -3,7 +3,7 @@ CREATE TYPE "payment_status" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAI
 
 -- CreateTable
 CREATE TABLE "payments" (
-    "id" SERIAL NOT NULL,
+    "id" UUID NOT NULL,
     "idempotency_key" UUID NOT NULL DEFAULT gen_random_uuid(),
     "amount_in_cents" BIGINT NOT NULL,
     "currency" TEXT NOT NULL,
