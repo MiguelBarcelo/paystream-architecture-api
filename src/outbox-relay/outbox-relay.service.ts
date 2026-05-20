@@ -1,4 +1,3 @@
-import { Outbox } from './../../dist/generated/prisma/client.d';
 import { Injectable, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ClientProxy } from '@nestjs/microservices';
@@ -22,7 +21,7 @@ export class OutboxRelayService {
 
     try {
       // 1. Bring in a block of pending events
-      const pendingEvents: Outbox[] = await this.prisma.outbox.findMany({
+      const pendingEvents = await this.prisma.outbox.findMany({
         where: { status: 'PENDING' },
         take: 20,
         orderBy: { createdAt: 'asc' },
