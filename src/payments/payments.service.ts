@@ -16,17 +16,32 @@ export class PaymentsService {
     idempotencyKey: string,
   ): Promise<{ data: Payment; status: number } | null> {
     try {
-      const { amount, card, ...data } = createPaymentDto;
-      const newPayment = await this.prisma.payment.create({
-        data: {
-          ...data,
-          amountInCents: amount,
-          last4: card?.slice(-4),
-          idempotencyKey,
-        },
-      });
+      // Execute both insertions ATOMICLY
+      return await this.prisma.$transaction(async (tx) => {
+        const { amount, card, ...data } = createPaymentDto;
+        const newPayment = await tx.payment.create({
+          data: {
+            ...data,
+            amountInCents: amount,
+            last4: card?.slice(-4),
+            idempotencyKey,
+          },
+        });
 
-      return { data: newPayment, status: 201 };
+        await tx.outbox.create({
+          data: {
+            type: 'payment_created',
+            payload: JSON.stringify({
+              card,
+              paymentId: newPayment.id,
+              amount: (Number(newPayment.amountInCents) / 100).toFixed(2),
+              currency: newPayment.currency,
+            }),
+          },
+        });
+
+        return { data: newPayment, status: 201 };
+      });
     } catch (error) {
       if (this.isUniqueViolation(error)) {
         const existingPayment = await this.prisma.payment.findUnique({
