@@ -20,6 +20,14 @@ import { OutboxRelayService } from 'src/outbox-relay/outbox-relay.service';
             queue: configService.get<string>('RMQ_QUEUE') as string,
             queueOptions: {
               durable: true,
+              arguments: {
+                'x-dead-letter-exchange': configService.get<string>(
+                  'DEAD_LETTER_EXCHANGE',
+                ),
+                'x-dead-letter-routing-key': configService.get<string>(
+                  'DEAD_LETTER_ROUTING_KEY',
+                ),
+              },
             },
           },
         }),
