@@ -5,6 +5,7 @@ import { PaymentsService } from './payments.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { OutboxRelayService } from 'src/outbox-relay/outbox-relay.service';
+import { PaymentResponseController } from './payment-response.controller';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { OutboxRelayService } from 'src/outbox-relay/outbox-relay.service';
       },
     ]),
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, PaymentResponseController],
   providers: [PaymentsService, OutboxRelayService],
 })
 export class PaymentsModule {}
