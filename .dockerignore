@@ -1,0 +1,40 @@
+# 1. Local Deps (Must be installed within the Dockerfile)
+**/node_modules/
+
+# 2. NestJS y TypeScript Build Artifacts 
+**/dist/
+**/dist-schema/
+**/.tsbuildinfo
+
+# 3. Environment variable and configuration files and secrets
+**/.env
+**/.env.production
+**/.env.development
+**/.env.local
+**/.env.*.local
+**/.git/
+**/.gitignore
+
+# 4. Error and performance logs
+**/logs/
+*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+
+# 5. Test files and coverage
+**/coverage/
+**/.nyc_output/
+
+# 6. Code editors and system tools
+**/.vscode/
+**/.idea/
+.DS_Store
+Thumbs.db
+
+# 7. Docker Infrastructure (Avoids self-copying)
+**/Dockerfile
+**/Dockerfile.*
+**/docker-compose*.yml
+**/.dockerignore

@@ -1,0 +1,67 @@
+# Multi-stage Build to optimize space on the VPS
+
+### Stage 1: NestJS app build ###
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Copy manifests
+COPY package*.json ./
+
+# Install all dependencies (includes devDependencies to compile)
+RUN npm ci
+
+# Copy the source code and compile to JS (/dist)
+COPY . .
+
+# 1. Generate the Prisma Client before NestJS compiling
+RUN npx prisma generate
+
+# 2. Compile the project (generates the /dist folder)
+RUN npm run build
+
+### Stage 2: Clean production dependencies ###
+FROM node:22-alpine AS deps
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install estrictly production deps
+RUN npm ci --omit=dev
+
+# Copy Prisma Schema in order to generate the Client
+COPY prisma ./prisma/
+COPY prisma.config.ts ./prisma.config.ts
+
+# Generate the Prisma Client for the Runner Stage and clean caché
+RUN npx prisma generate && npm cache clean --force
+
+### Stage 3: Production Runner ###
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+# Establish a safe and production environment
+ENV NODE_ENV=production
+
+# Copy only the production modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+
+# Copy compiled artifacts and generated Prisma
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/generated ./generated
+
+# Copy Prisma migrations and schema
+COPY prisma ./prisma/
+COPY prisma.config.ts ./prisma.config.ts
+
+# Expose NestJS port by default (best practice documentation)
+EXPOSE 3000
+
+# NestJS generates its entry point in dist/main.js by default
+#CMD ["node", "dist/src/main.js"]
+
+# ...instead, execute migrations
+CMD ["sh", "-c", "npx prisma migrate deploy --config=prisma.config.ts && node dist/src/main.js"]
